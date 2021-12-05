@@ -28,10 +28,11 @@ def non_shared_axis_index(start, end):
         return 1
     if start[1] == end[1]:
         return 0
-    raise ValueError
+    return None
 
 
 def other_axis(axis):
+    # Should have used collections.Counter in hindsight
     if axis == 0:
         return 1
     return 0
@@ -62,48 +63,88 @@ def mark_line(grid, start, end):
         assert start[0] == end[0]
         print(f"Marking row of length {abs(start[1] - end[1])}")
         return mark_row(grid, start[0], start[1], end[1])
-    raise ValueError
+    # raise ValueError
+    print(f"Marking diagonal ({start} -> {end})")
+    mark_diagonal(grid, start, end)
 
 
-def count_safe_points(grid, safe_threshold=1):
+def count_dangerous_points(grid, safe_threshold=1):
     tally = 0
     for column in grid:
         for cell in column:
-            if cell <= safe_threshold:
+            if cell > safe_threshold:
                 tally += 1
     return tally
 
 
-
 def part1():
     lines = [x for x in generate_lines()]
-    # max_x = max(max([start[0], end[0]]) for start, end in lines)
-    # max_y = max(max([start[1], end[1]]) for start, end in lines)
-    max_x = 990
-    max_y = 990
+    max_x = max(max([start[0], end[0]]) for start, end in lines)
+    max_y = max(max([start[1], end[1]]) for start, end in lines)
+
     print(f"Grid Dimensions: {max_x} x {max_y}")
 
     grid = empty_grid(max_x + 1, max_y + 1)
 
-    skipped = 0
+    # skipped = 0
     for line in lines:
         start, end = line
-        if not line_shares_x_or_y(start, end):
-            print(f"Skipping ({start} -> {end})")
-            skipped += 1
-            continue
+        # if not line_shares_x_or_y(start, end):
+        #     # print(f"Skipping ({start} -> {end})")
+        #     skipped += 1
+        #     continue
         mark_line(grid, start, end)
 
-    print(f"Skipped: {skipped}")
-    safe_points = count_safe_points(grid)
-    print(f"Safe points: {safe_points}")
+    # print(grid)
+    from collections import Counter
+    counter = Counter()
+    for row in grid:
+        for cell in row:
+            counter[cell] += 1
+    print(counter)
+    # print(f"Skipped: {skipped}")
+    # danger_points = count_dangerous_points(grid)
+    # print(f"Safe points: {danger_points}")
     # not 974977
     # not 975968
-    dangerous_points = count_safe_points(grid, 999) - safe_points
+    dangerous_points = count_dangerous_points(grid)
     print(f"Unsafe points: {dangerous_points}")
+    # I misread the question. It was *danger* points, not safe lol
+    # 6113
+
+
+#####################################
+
+
+def mark_diagonal(grid, start, end):
+    start_x, start_y = start
+    end_x, end_y = end
+    # print(f"\tDiag ({start_x}, {start_y}) -> ({end_x}, {end_y})")
+    length_x = end_x - start_x
+    length_y = end_y - start_y
+    print(f"\tDiag x: {length_x}")
+    print(f"\tDiag y: {length_y}")
+    print(f"\tDiag length: {abs(length_x)}")
+    assert abs(length_x) == abs(length_y)
+    step_x = 1 if end_x > start_x else -1
+    step_y = 1 if end_y > start_y else -1
+    cur_x = start_x
+    cur_y = start_y
+    while cur_x != end_x:
+        grid[cur_x][cur_y] += 1
+        cur_x += step_x
+        cur_y += step_y
+
+    assert cur_y == end_y
+
+
+def part2():
+    print("\n###########################\n")
+    return part1()
+    # 20352 is too low
+    # 20353 is wrong. I'm not off-by-one
 
 
 
-
-
-part1()
+# part1()
+part2()
