@@ -42,14 +42,16 @@ def mark_row(grid, x, start_y, end_y):
     step = 1 if end_y > start_y else -1
     for i in range(start_y, end_y + step, step):
         # print(f"Marking ({x}, {i})")
-        grid[x][i] += 1
+        # grid[x][i] += 1
+        grid[(x, i)] += 1
 
 
 def mark_column(grid, y, start_x, end_x):
     step = 1 if end_x > start_x else -1
     for i in range(start_x, end_x + step, step):
         # print(f"Marking ({i}, {y})")
-        grid[i][y] += 1
+        # grid[i][y] += 1
+        grid[(i, y)] += 1
 
 
 def mark_line(grid, start, end):
@@ -69,12 +71,13 @@ def mark_line(grid, start, end):
 
 
 def count_dangerous_points(grid, safe_threshold=1):
-    tally = 0
-    for column in grid:
-        for cell in column:
-            if cell > safe_threshold:
-                tally += 1
-    return tally
+    # tally = 0
+    # for column in grid:
+    #     for cell in column:
+    #         if cell > safe_threshold:
+    #             tally += 1
+    # return tally
+    return sum(1 if count > safe_threshold else 0 for count in grid.values())
 
 
 def part1():
@@ -84,7 +87,9 @@ def part1():
 
     print(f"Grid Dimensions: {max_x} x {max_y}")
 
-    grid = empty_grid(max_x + 1, max_y + 1)
+    # grid = empty_grid(max_x + 1, max_y + 1)
+    from collections import Counter
+    grid = Counter()
 
     # skipped = 0
     for line in lines:
@@ -131,11 +136,13 @@ def mark_diagonal(grid, start, end):
     cur_x = start_x
     cur_y = start_y
     while cur_x != end_x:
-        grid[cur_x][cur_y] += 1
+        # grid[cur_x][cur_y] += 1
+        grid[(cur_x, cur_y)] += 1
         cur_x += step_x
         cur_y += step_y
 
     assert cur_y == end_y
+    grid[(end_x, end_y)] += 1
 
 
 def part2():
@@ -143,6 +150,9 @@ def part2():
     return part1()
     # 20352 is too low
     # 20353 is wrong. I'm not off-by-one
+    # 341348 is wrong
+    # After converting to Counter() I get the same result, 20352
+    # Fixed - I forgot to mark the final point of diagonals
 
 
 
