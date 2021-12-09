@@ -51,14 +51,15 @@ def get_low_points():
 def basin_size(low_point):
     condition = lambda value: value < 9
     seen = []
-    to_see = [low_point]
+    to_see = set([low_point])
     while to_see:
-        coords = to_see.pop(0)
+        coords = to_see.pop()
         seen.append(coords)
         point_neighbours = neighbours(*coords)
         basin_neighbours = [(x, y) for (x, y) in point_neighbours if grid[x][y] < 9]
         new_neighbours = [n for n in basin_neighbours if n not in seen]
-        to_see.extend(new_neighbours)
+        to_see.update(new_neighbours)
+    assert len(seen) == len(set(seen))
     print(f"Basin at {low_point} size: {len(seen)}")
     return len(seen)
 
@@ -73,6 +74,7 @@ def part2():
     print(f"Final answer: {answer}")
     # 821702089 is too high
     # Gets the wrong answer. I double-checked several basins & seems correct. Leaving this alone for now.
+    # agh, changed `to_see` to a set. duh. That fixed it.
 
 
 # part1()
