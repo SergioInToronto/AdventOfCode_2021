@@ -1,105 +1,61 @@
 input_filename = __file__.split('.')[0] + ".input"
 with open(input_filename) as f:
-    raw = f.read().strip().split('\n')
+    raw = f.read().strip().split(',')
 
-rows = [x.split("|") for x in raw]
+crab_positions = [int(x) for x in raw]
 
 
 def part1():
-    counter = 0
-    for index, (_, display_output) in enumerate(rows):
-        display_digits = display_output.split()
-        found = len([d for d in display_digits if len(d) in (2, 3, 4, 7)]) # digits 1, 7, 4, 8
-        counter += found
-        # print(f"Index {index} - Inspecting {display_output}: found {found}")
-    print(f"Found {zcounter} digits that must be 1, 4, 7, and 8")
-    # 257 is too low
+    pos_min = min(crab_positions)
+    pos_max = max(crab_positions)
+    pos_to_fuel_cost = {}
+
+    for group_pos in range(pos_min, pos_max + 1):
+        deltas = [abs(crab_pos - group_pos) for crab_pos in crab_positions]
+        pos_to_fuel_cost[group_pos] = sum(deltas)
 
 
-def digits_with_length(digits, length):
-    return [d for d in digits if len(d) == length]
+    # debugging
+    # print(pos_to_fuel_cost)
+    # __import__("pprint").pprint(pos_to_fuel_cost)
+    # print(f"\tAVERAGE: {sum(pos_to_fuel_cost.values()) / len(pos_to_fuel_cost)}")
+
+    cheapest_fuel_cost = min(pos_to_fuel_cost.values())
+    best_position = next(k for k, v in pos_to_fuel_cost.items() if v == cheapest_fuel_cost)
+    fuel_cost = pos_to_fuel_cost[best_position]
+
+    print(f"Quickly crabs, align to position {best_position}!")
+    print(f"This manuver will require {fuel_cost} fuel")
 
 
-def digit_with_length(digits, length):
-    result = digits_with_length(digits, length)
-    assert len(result) == 1
-    return result[0]
-
-
-def determine_top_segment(one, seven):
-    return next(s for s in seven if s not in one)
-
-
-def decode_display(display_output, numbers):
-    def decode(display_number):
-        for number, code in enumerate(numbers):
-            if set(display_number) == set(code):
-                return str(number)
-        breakpoint()
-        raise ValueError
-
-    digits = map(decode, display_output.split())
-    return int(''.join(digits))
-
-
-def determine_display_value(all_digits, display_output):
-    print(f"\tWorking on {all_digits}")
-    digits = all_digits.split()
-
-    one = digit_with_length(digits, 2)
-    seven = digit_with_length(digits, 3)
-    top_segment = determine_top_segment(one, seven)
-
-    four = digit_with_length(digits, 4)
-    eight = digit_with_length(digits, 7)
-
-    topleft_and_middle = ''.join(s for s in four if s not in one)
-
-    two_three_and_five = digits_with_length(digits, 5)
-    middle_segment = next(s for s in four if all(s in d for d in two_three_and_five))
-    topleft_segment = next(s for s in topleft_and_middle if s != middle_segment)
-
-    three = next(d for d in two_three_and_five if all(s in d for s in one))
-    five = next(d for d in two_three_and_five if topleft_segment in d)
-    two = next(d for d in two_three_and_five if d not in (three, five))
-
-    topright_segment = next(s for s in one if s in two)
-    bottomright_segment = next(s for s in one if s in five)
-    bottomleft_segment = next(s for s in two if s not in three)
-
-    six_nine_and_zero = [d for d in digits if len(d) == 6]
-    six = next(d for d in six_nine_and_zero if topright_segment not in d)
-    nine = next(d for d in six_nine_and_zero if bottomleft_segment not in d)
-    zero = next(d for d in six_nine_and_zero if middle_segment not in d)
-
-    numbers = [
-        zero,
-        one,
-        two,
-        three,
-        four,
-        five,
-        six,
-        seven,
-        eight,
-        nine,
-    ]
-    output = decode_display(display_output.strip(), numbers)
-    print(f"Decoded {output} from {display_output}")
-    return output
-
-    # print(f"\t\t Zero Six Nine: {zero}, {six}, {nine}")
-    # print(f"\t\tTop Segment (Segment A): {top_segment}")
-    # print(f"\t\tTop Left and Middle (Segment B & D): {topleft_and_middle}")
-    # print(f"\t\t Middle Segment (Segment D): {middle_segment}")
-    # print(f"\t\t Top Left Segment (Segment D): {topleft_segment}")
-    # print(f"\t\t Three: {three}")
-    # return 0
+def crab_fuel_cost(delta):
+    if delta < 10:
+        # print(f"Cost for delta {delta}: {sum(step - 1 for step in range(1, delta + 1))}")
+        pass
+    return sum(step for step in range(1, delta + 1))
 
 
 def part2():
-    total = sum(determine_display_value(*row) for row in rows)
-    print(f"Totall of all {len(rows)} displays is: {total}")
+    pos_min = min(crab_positions)
+    pos_max = max(crab_positions)
+    pos_to_fuel_cost = {}
+    print(f"Range of Positions: {pos_min} - {pos_max}")
+
+    for group_pos in range(pos_min, pos_max + 1):
+        print(f"Calculating position {group_pos}")
+        deltas = [abs(crab_pos - group_pos) for crab_pos in crab_positions]
+        pos_to_fuel_cost[group_pos] = sum(crab_fuel_cost(d) for d in deltas)
+
+    cheapest_fuel_cost = min(pos_to_fuel_cost.values())
+    best_position = next(k for k, v in pos_to_fuel_cost.items() if v == cheapest_fuel_cost)
+    fuel_cost = pos_to_fuel_cost[best_position]
+
+    print(f"Quickly crabs, align to position {best_position}!")
+    print(f"This manuver will require {fuel_cost} fuel")
+    # Too high: 357461350417091132998628818130170626710244303668212016473977567461747280851920454924692000993900741063265478491543370624613042413715357696532230413319279431699026030284817239206569555937047591949485769471037565895059820813230887719144588509796067787482270144880267834383677207432550238
+    # Too low: 96003565
+    # Too low: 96004565
+
 
 
 # part1()

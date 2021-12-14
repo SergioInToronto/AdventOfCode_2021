@@ -2,81 +2,105 @@ input_filename = __file__.split('.')[0] + ".input"
 with open(input_filename) as f:
     raw = f.read().strip().split('\n')
 
-
-grid = [[int(cell) for cell in row] for row in raw]
-assert all(len(row) == len(grid[0]) for row in grid) # all rows are the same length
-max_x = len(grid) - 1
-max_y = len(grid[0]) - 1
-
-
-def neighbours(x, y):
-    result = []
-    if 0 <= x - 1:
-        result.append((x-1, y))
-    if x + 1 <= max_x:
-        result.append((x+1, y))
-    if 0 <= y - 1:
-        result.append((x, y-1))
-    if y + 1 <= max_y:
-        result.append((x, y+1))
-    return result
-
-
-def neighbour_values(x, y):
-    return [grid[x][y] for (x, y) in neighbours(x, y)]
+rows = [x.split("|") for x in raw]
 
 
 def part1():
-    low_point_heights = []
-    for x, row in enumerate(grid):
-        for y, cell in enumerate(row):
-            if all(cell < nv for nv in neighbour_values(x, y)):
-                print(f"Low point {cell} at grid[{x}][{y}]")
-                low_point_heights.append(cell)
-    print(f"Found {len(low_point_heights)}")
-    total_risk_level = sum(low_point_heights) + len(low_point_heights) # add 1 to each point to determine risk
-    print(f"Sum of all risk levels: {total_risk_level}")
+    counter = 0
+    for index, (_, display_output) in enumerate(rows):
+        display_digits = display_output.split()
+        found = len([d for d in display_digits if len(d) in (2, 3, 4, 7)]) # digits 1, 7, 4, 8
+        counter += found
+        # print(f"Index {index} - Inspecting {display_output}: found {found}")
+    print(f"Found {zcounter} digits that must be 1, 4, 7, and 8")
+    # 257 is too low
 
 
-def get_low_points():
-    low_point_coords = []
-    for x, row in enumerate(grid):
-        for y, cell in enumerate(row):
-            if all(cell < nv for nv in neighbour_values(x, y)):
-                # print(f"Low point {cell} at grid[{x}][{y}]")
-                low_point_coords.append((x, y))
-    return low_point_coords
+def digits_with_length(digits, length):
+    return [d for d in digits if len(d) == length]
 
 
-def basin_size(low_point):
-    condition = lambda value: value < 9
-    seen = []
-    to_see = set([low_point])
-    while to_see:
-        coords = to_see.pop()
-        seen.append(coords)
-        point_neighbours = neighbours(*coords)
-        basin_neighbours = [(x, y) for (x, y) in point_neighbours if grid[x][y] < 9]
-        new_neighbours = [n for n in basin_neighbours if n not in seen]
-        to_see.update(new_neighbours)
-    assert len(seen) == len(set(seen))
-    print(f"Basin at {low_point} size: {len(seen)}")
-    return len(seen)
+def digit_with_length(digits, length):
+    result = digits_with_length(digits, length)
+    assert len(result) == 1
+    return result[0]
+
+
+def determine_top_segment(one, seven):
+    return next(s for s in seven if s not in one)
+
+
+def decode_display(display_output, numbers):
+    def decode(display_number):
+        for number, code in enumerate(numbers):
+            if set(display_number) == set(code):
+                return str(number)
+        breakpoint()
+        raise ValueError
+
+    digits = map(decode, display_output.split())
+    return int(''.join(digits))
+
+
+def determine_display_value(all_digits, display_output):
+    print(f"\tWorking on {all_digits}")
+    digits = all_digits.split()
+
+    one = digit_with_length(digits, 2)
+    seven = digit_with_length(digits, 3)
+    top_segment = determine_top_segment(one, seven)
+
+    four = digit_with_length(digits, 4)
+    eight = digit_with_length(digits, 7)
+
+    topleft_and_middle = ''.join(s for s in four if s not in one)
+
+    two_three_and_five = digits_with_length(digits, 5)
+    middle_segment = next(s for s in four if all(s in d for d in two_three_and_five))
+    topleft_segment = next(s for s in topleft_and_middle if s != middle_segment)
+
+    three = next(d for d in two_three_and_five if all(s in d for s in one))
+    five = next(d for d in two_three_and_five if topleft_segment in d)
+    two = next(d for d in two_three_and_five if d not in (three, five))
+
+    topright_segment = next(s for s in one if s in two)
+    bottomright_segment = next(s for s in one if s in five)
+    bottomleft_segment = next(s for s in two if s not in three)
+
+    six_nine_and_zero = [d for d in digits if len(d) == 6]
+    six = next(d for d in six_nine_and_zero if topright_segment not in d)
+    nine = next(d for d in six_nine_and_zero if bottomleft_segment not in d)
+    zero = next(d for d in six_nine_and_zero if middle_segment not in d)
+
+    numbers = [
+        zero,
+        one,
+        two,
+        three,
+        four,
+        five,
+        six,
+        seven,
+        eight,
+        nine,
+    ]
+    output = decode_display(display_output.strip(), numbers)
+    print(f"Decoded {output} from {display_output}")
+    return output
+
+    # print(f"\t\t Zero Six Nine: {zero}, {six}, {nine}")
+    # print(f"\t\tTop Segment (Segment A): {top_segment}")
+    # print(f"\t\tTop Left and Middle (Segment B & D): {topleft_and_middle}")
+    # print(f"\t\t Middle Segment (Segment D): {middle_segment}")
+    # print(f"\t\t Top Left Segment (Segment D): {topleft_segment}")
+    # print(f"\t\t Three: {three}")
+    # return 0
 
 
 def part2():
-    low_point_coords = get_low_points()
-    print(f"Computing sizes for {len(low_point_coords)} basins...")
-    basin_sizes = [basin_size(low_point) for low_point in low_point_coords]
-    basin_sizes = sorted(basin_sizes, reverse=True)
-    print(f"Top 3 basins sizes: {basin_sizes[0]}, {basin_sizes[1]}, {basin_sizes[2]}")
-    answer = basin_sizes[0] * basin_sizes[1] * basin_sizes[2]
-    print(f"Final answer: {answer}")
-    # 821702089 is too high
-    # Gets the wrong answer. I double-checked several basins & seems correct. Leaving this alone for now.
-    # agh, changed `to_see` to a set. duh. That fixed it.
+    total = sum(determine_display_value(*row) for row in rows)
+    print(f"Totall of all {len(rows)} displays is: {total}")
 
 
 # part1()
 part2()
-# basin_size((99, 13))
